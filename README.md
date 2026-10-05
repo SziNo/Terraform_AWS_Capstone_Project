@@ -93,6 +93,8 @@ A `destroy` csak azt bontja le, amit a state nyilvántart, saját magát a state
 aws s3 rb s3://szino-terraform-state --force
 ```
 
+> Vagy csak futtasd a `teardown.sh` fájlt, az lefuttatja a `terraform destroy -auto-approve` parancsot és törli a bucketet is.
+
 > A `--force` törli a bucketben lévő objektumokat is a bucket törlése előtt — enélkül a `rb` hibát dob, ha a bucket nem üres (az `s3api`-s verziónál ezt a `s3 rm --recursive` + `s3api delete-bucket` két lépése végezte el).
 
 ### Ha a state bucket törlődött, miközben remote state-en voltál
