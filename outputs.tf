@@ -12,3 +12,14 @@ output "instance_ids" {
   description = "IDs of the application instances"
   value       = aws_instance.app[*].id
 }
+
+output "db_private_ip" {
+  description = "Private IP of the database instance"
+  value       = aws_instance.db.private_ip
+}
+
+output "db_password" {
+  description = "Generated password for the database"
+  value       = random_password.db.result
+  sensitive   = true
+}

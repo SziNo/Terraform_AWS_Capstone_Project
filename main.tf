@@ -225,11 +225,11 @@ resource "aws_security_group" "db" {
   }
 
   egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] // átírni később S3 Gateway prefix listre
-    description = "HTTPS for package updates"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    prefix_list_ids = [data.aws_prefix_list.s3.id]
+    description     = "HTTPS to S3 gateway endpoint only"
   }
 
   tags = merge(local.common_tags, {
@@ -459,4 +459,37 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# 12. (Optional) Define the Database
+# 12. (Optional) Define the Database (With EC2 Instance, not RDS now)
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project}-s3-endpoint"
+  })
+}
+
+resource "random_password" "db" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+resource "aws_instance" "db" {
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.private[0].id
+  vpc_security_group_ids      = [aws_security_group.db.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = false
+
+  user_data = templatefile("${path.module}/db-userdata.sh.tpl", {
+    db_password = random_password.db.result
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project}-db"
+  })
+}

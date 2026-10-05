@@ -70,6 +70,7 @@ terraform {
     key          = "capstone/terraform.tfstate"
     region       = "eu-west-1"
     use_lockfile = true
+    encrypt      = true
   }
 }
 ```
