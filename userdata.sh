@@ -1,12 +1,19 @@
 #!/bin/bash
-dnf update -y
 dnf install -y nginx
 systemctl enable nginx
 systemctl start nginx
 
-# Kezdőlap az instance ID-vel, hogy látszódjon, melyik instance válaszol
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-echo "Hello from $INSTANCE_ID" > /usr/share/nginx/html/index.html
+# Várj, amíg az IMDS elérhető (max 10 próbálkozás)
+TOKEN=""
+for i in $(seq 1 10); do
+    TOKEN=$(curl -sX PUT "http://169.254.169.254/latest/api/token" \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+    if [ -n "$TOKEN" ]; then break; fi
+    sleep 2
+done
 
-# Health check végpont az ALB-hoz
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)
+
+echo "Hello from $INSTANCE_ID" > /usr/share/nginx/html/index.html
 echo "OK" > /usr/share/nginx/html/health

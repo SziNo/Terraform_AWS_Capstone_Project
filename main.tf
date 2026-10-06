@@ -394,6 +394,7 @@ resource "aws_instance" "app" {
   associate_public_ip_address = false
 
   user_data = file("${path.module}/userdata.sh")
+  user_data_replace_on_change = true
 
   tags = merge(local.common_tags, {
     Name = "${var.project}-app-${count.index + 1}"
